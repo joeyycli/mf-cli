@@ -1,188 +1,145 @@
 @echo off
 setlocal EnableExtensions
 
-:: =========================================================
-:: 
-:: Commands:
-::   mf open path                - Open file or folder
-::   mf edit file                - Open file in Notepad (creates if missing)
-::   mf rm path                  - Remove file or folder recursively
-::   mf cp src dest              - Copy file or folder
-::   mf mv src dest              - Move or rename file or folder
-::   mf tree [path]              - Display directory tree
-::   mf print file               - Print file contents to console
-::   mf ls [path]                - List directory contents
-::   mf folder in file           - Create file inside folder and open in Notepad
-::   mf file                     - Create or edit file in Notepad
-::   mf folder                   - Create folder
-::   mf help                     - Display this help
-::
-:: If no command is given, 'mf' displays this help.
+:: ===============================
+:: mf — Minimal File Utility
+:: ===============================
 
-:: ---------------------------------------------------------
-:: Dispatch: detect command or default actions
-
+:: ---------------- help ----------------
 if "%1"=="" goto :HELP
 if /I "%1"=="help" goto :HELP
-if /I "%1"=="open" goto :OPEN
-if /I "%1"=="edit" goto :EDIT
-if /I "%1"=="rm" goto :RM
-if /I "%1"=="cp" goto :CP
-if /I "%1"=="mv" goto :MV
-if /I "%1"=="tree" goto :TREE
-if /I "%1"=="print" goto :PRINT
-if /I "%1"=="ls" goto :LS
 
-:: Nested file creation (folder in file)
-if /I "%2"=="in" goto :NESTED
-
-:: Single argument (folder or file)
-if "%2"=="" goto :SINGLE
-
-:: Unknown command or wrong syntax
-goto :UNKNOWN
-
-:: ---------------------------------------------------------
-:OPEN
-    if "%2"=="" (
-        echo Usage: mf open path
-        exit /b 1
-    )
+:: ---------------- open ----------------
+if /I "%1"=="open" (
+    if "%2"=="" exit /b 1
     start "" "%~2"
     exit /b 0
+)
 
-:EDIT
-    if "%2"=="" (
-        echo Usage: mf edit file
-        exit /b 1
-    )
+:: ---------------- edit ----------------
+if /I "%1"=="edit" (
+    if "%2"=="" exit /b 1
     if not exist "%~2" type nul > "%~2"
     notepad "%~2"
     exit /b 0
+)
 
-:RM
-    if "%2"=="" (
-        echo Usage: mf rm path
-        exit /b 1
-    )
+:: ---------------- rm ----------------
+if /I "%1"=="rm" (
+    if "%2"=="" exit /b 1
     if exist "%~2\" (
         rmdir /s /q "%~2"
     ) else (
         del /f /q "%~2"
     )
     exit /b 0
+)
 
-:CP
-    if "%3"=="" (
-        echo Usage: mf cp source dest
-        exit /b 1
-    )
+:: ---------------- cp ----------------
+if /I "%1"=="cp" (
+    if "%3"=="" exit /b 1
     if exist "%~2\" (
         xcopy "%~2" "%~3" /E /I /Y > nul
     ) else (
         copy "%~2" "%~3" > nul
     )
     exit /b 0
+)
 
-:MV
-    if "%3"=="" (
-        echo Usage: mf mv source dest
-        exit /b 1
-    )
+:: ---------------- mv ----------------
+if /I "%1"=="mv" (
+    if "%3"=="" exit /b 1
     move /Y "%~2" "%~3" > nul
     exit /b 0
+)
 
-:TREE
+:: ---------------- tree ----------------
+if /I "%1"=="tree" (
     if "%2"=="" (
         tree
     ) else (
         tree "%~2"
     )
     exit /b 0
+)
 
-:PRINT
-    if "%2"=="" (
-        echo Usage: mf print file
-        exit /b 1
-    )
-    if exist "%~2" (
-        type "%~2"
-    ) else (
-        echo File not found: %~2
-    )
+:: ---------------- print ----------------
+if /I "%1"=="print" (
+    if "%2"=="" exit /b 1
+    if exist "%~2" type "%~2"
     exit /b 0
+)
 
-:LS
+:: ---------------- ls ----------------
+if /I "%1"=="ls" (
     if "%2"=="" (
         dir /b
     ) else (
         dir /b "%~2"
     )
     exit /b 0
+)
 
-:NESTED
-    if "%3"=="" (
-        echo Usage: mf folder in file
-        exit /b 1
-    )
-    set "DIR=%~1"
-    set "FILE=%~3"
+:: =========================================================
+:: FILE IN FOLDER
+:: mf file.txt in folder [--stdin]
+:: =========================================================
+if /I "%2"=="in" (
+    if "%3"=="" exit /b 1
+
+    set "FILE=%~1"
+    set "DIR=%~3"
     set "FULL=%DIR%\%FILE%"
+
     if not exist "%DIR%" mkdir "%DIR%"
-    if "%4"=="--stdin" (
-        if not exist "%FULL%" type nul > "%FULL%"
-        echo Pasting content into "%FULL%". Press Ctrl+Z then Enter when done.
+
+    if /I "%4"=="--stdin" (
+        echo Paste content. Press Ctrl+Z then Enter to save.
         copy con "%FULL%" > nul
-        echo File created
         exit /b 0
     )
+
     if not exist "%FULL%" type nul > "%FULL%"
     notepad "%FULL%"
-    echo Opened %FULL% for editing
     exit /b 0
+)
 
-:SINGLE
-    :: If user passes --stdin after a file name, read from stdin
-    if /I "%2"=="--stdin" (
-        if "%~1"=="" (
-            echo Usage: mf file [--stdin]
-            exit /b 1
-        )
-        if not exist "%~1" type nul > "%~1"
-        echo Pasting content into "%~1". Press Ctrl+Z then Enter when done.
-        copy con "%~1" > nul
-        echo File created
-        exit /b 0
-    )
-    :: Determine if argument has a dot (file) or not (folder)
-    echo %1 | find "." > nul
-    if errorlevel 1 (
-        mkdir "%~1" 2>nul
-        echo Folder created
-    ) else (
-        if not exist "%~1" type nul > "%~1"
-        notepad "%~1"
-        echo Opened %~1 for editing
-    )
+:: =========================================================
+:: FILE IN CURRENT DIR
+:: =========================================================
+if /I "%2"=="--stdin" (
+    echo Paste content. Press Ctrl+Z then Enter to save.
+    copy con "%~1" > nul
     exit /b 0
+)
 
-:UNKNOWN
-    echo Unknown command or invalid syntax. Type "mf help" for usage.
-    exit /b 1
+:: ---------------- single arg ----------------
+echo %1 | find "." > nul
+if errorlevel 1 (
+    mkdir "%~1" 2>nul
+    exit /b 0
+) else (
+    if not exist "%~1" type nul > "%~1"
+    notepad "%~1"
+    exit /b 0
+)
 
 :HELP
+echo mf — Minimal File Utility
 echo.
-echo Commands:
-echo   mf open path                - open file or folder
-echo   mf edit file                - edit file in Notepad (creates if missing)
-echo   mf rm path                  - remove file or folder recursively
-echo   mf cp src dest              - copy file or folder
-echo   mf mv src dest              - move or rename file or folder
-echo   mf tree [path]              - show directory tree
-echo   mf print file               - print file contents to console
-echo   mf ls [path]                - list directory contents
-echo   mf folder in file           - create file inside folder and open in Notepad
-echo   mf file                     - create/edit file in Notepad
-echo   mf folder                   - create folder
-echo   mf help                     - show this help
+echo Usage:
+echo   mf file.txt
+echo   mf file.txt --stdin
+echo   mf file.txt in folder
+echo   mf file.txt in folder --stdin
+echo   mf folder
+echo   mf open path
+echo   mf edit file
+echo   mf rm path
+echo   mf cp src dest
+echo   mf mv src dest
+echo   mf ls [path]
+echo   mf tree [path]
+echo   mf print file
+echo   mf help
 exit /b 0
