@@ -1,6 +1,6 @@
-# mf — Minimal File Utility for Windows
+# Mf — Minimal File Utility for Windows
 
-`mf` is a lightweight Windows CMD utility that lets you create, edit, and manage files and folders directly from the command line — including pasting **large multi-line code blocks** straight into files via stdin.
+[`Mf`](https://github.com/joeyycli/mf-cli/tree/main) is a lightweight Windows CMD utility that lets you create, edit, and manage files and folders directly from the command line — including pasting **large multi-line code blocks** straight into files via stdin.
 
 No PowerShell. No dependencies. Just CMD.
 
