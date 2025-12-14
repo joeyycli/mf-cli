@@ -26,4 +26,3 @@ No PowerShell. No dependencies. Just CMD.
 
 1. Download [`mf.bat`](https://github.com/joeyyy5490-beep/mf-cli/blob/main/mf.bat)
 2. Place it in a folder on your `PATH`  
-   Example:
